@@ -8,12 +8,12 @@ public interface IUserService {
 
     Mono<UserEntity> create(UserEntity user);
 
-    Mono<UserEntity> list(Long id) throws NotFoundException;
+    Mono<UserEntity> get(Long id) throws NotFoundException;
 
     Mono<UserEntity> update(UserEntity user);
 
     void delete(Long id);
 
-    Flux<UserEntity> findAll();
+    Flux<UserEntity> list();
 
 }

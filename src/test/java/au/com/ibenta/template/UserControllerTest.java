@@ -1,5 +1,6 @@
 package au.com.ibenta.template;
 
+import au.com.ibenta.test.model.User;
 import au.com.ibenta.test.persistence.UserEntity;
 import au.com.ibenta.test.persistence.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,17 +41,23 @@ public class UserControllerTest {
 
     @Test
     public void createTest() {
-        UserEntity userEntity = new UserEntity("Klee", "Kloo", "kleekloo@email.com", "1234");
+        User mockUser = new User("Klee", "Kloo", "kleekloo@email.com", "1234");
         webTestClient.post().uri("/user/create")
-                .body(Mono.just(userEntity), UserEntity.class)
+                .body(Mono.just(mockUser), UserEntity.class)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
                 .jsonPath("$.id").isNotEmpty()
-                .jsonPath("$.firstName").isEqualTo("Klee")
-                .jsonPath("$.lastName").isEqualTo("Kloo")
-                .jsonPath("$.email").isEqualTo("kleekloo@email.com")
-                .jsonPath("$.password").isEqualTo("1234");
+                .jsonPath("$.firstName").isEqualTo(mockUser.getFirstName())
+                .jsonPath("$.lastName").isEqualTo(mockUser.getLastName())
+                .jsonPath("$.email").isEqualTo(mockUser.getEmail())
+                .jsonPath("$.password").isEqualTo(null);
+
+        mockUser.setEmail("kleekloo@email");
+        webTestClient.post().uri("/user/create")
+                .body(Mono.just(mockUser), UserEntity.class)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
@@ -60,7 +67,10 @@ public class UserControllerTest {
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isNotEmpty()
-                .jsonPath("$.firstName").isEqualTo("John");
+                .jsonPath("$.firstName").isEqualTo(user.getFirstName())
+                .jsonPath("$.lastName").isEqualTo(user.getLastName())
+                .jsonPath("$.email").isEqualTo(user.getEmail())
+                .jsonPath("$.password").isEqualTo(null);
 
         webTestClient.get().uri("/user/"+user.getId()+1)
                 .exchange()
@@ -69,14 +79,27 @@ public class UserControllerTest {
 
     @Test
     public void updateTest() {
+        user.setFirstName("Johny");
         user.setLastName("Smithy");
+        user.setEmail("johnysmithy@email.com");
+        user.setPassword("5467");
         webTestClient.put().uri("/user/update")
                 .body(Mono.just(user), UserEntity.class)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isNotEmpty()
-                .jsonPath("$.lastName").isEqualTo("Smithy");
+                .jsonPath("$.firstName").isEqualTo(user.getFirstName())
+                .jsonPath("$.lastName").isEqualTo(user.getLastName())
+                .jsonPath("$.email").isEqualTo(user.getEmail())
+                .jsonPath("$.password").isEqualTo(null);
+
+        user.setEmail("johnsmith@email");
+        webTestClient.post().uri("/user/create")
+                .body(Mono.just(user), UserEntity.class)
+                .exchange()
+                .expectStatus().isBadRequest();
+        user.setEmail("johnsmith@email.com");
 
         user.setId(user.getId()+1);
         webTestClient.put().uri("/user/update")
